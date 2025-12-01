@@ -2,8 +2,8 @@ import os
 import glob
 import argparse
 from tokenizers import Tokenizer
-from tokenizers.trainers import WordPieceTrainer
-from tokenizers.models import WordPiece
+from tokenizers.trainers import SentencePieceTrainer, WordPieceTrainer
+from tokenizers.models import SentencePiece, WordPiece
 from tokenizers import normalizers
 from tokenizers.normalizers import NFC, Lowercase
 from tokenizers.pre_tokenizers import Whitespace
@@ -15,7 +15,7 @@ special_token_dict = {"unknown_token": "[UNK]",
                       "start_token": "[BOS]",
                       "end_token": "[EOS]"}
 
-def train_tokenizer(path_to_data_root):
+def train_tokenizer(path_to_data_root, save_path):
 
     """
     We need to train a WordPiece tokenizer on our french data (as our regular tokenizers are mostly for English!)
@@ -43,12 +43,12 @@ def train_tokenizer(path_to_data_root):
     tokenizer.pre_tokenizer = Whitespace()
     
     ### Find all Target Language Files (ours are french ending with fr) ###
-    french_files = glob.glob(os.path.join(path_to_data_root, "**/*.fr"))
+    vie_files = os.path.join(path_to_data_root, "train.vi.txt")
     
     ### Train Tokenizer ###
-    trainer = WordPieceTrainer(vocab_size=32000, special_tokens=list(special_token_dict.values()))
-    tokenizer.train(french_files, trainer)
-    tokenizer.save("trained_tokenizer/french_wp.json")
+    trainer = SentencePieceTrainer(vocab_size=32000, special_tokens=list(special_token_dict.values()))
+    tokenizer.train(vie_files, trainer)
+    tokenizer.save(save_path + "/vie_wp.json")
 
 class FrenchTokenizer:
 
@@ -123,10 +123,16 @@ if __name__ == "__main__":
         type=str
     )
 
+    parser.add_argument(
+        "--save_path", 
+        required=True, 
+        help="Path to where you want to save the trained tokenizer",
+    )
+
+
     args = parser.parse_args()
 
-    path_to_data_root = "/mnt/datadrive/data/machine_translation/english2french/"
-    train_tokenizer(args.path_to_data_root)
+    train_tokenizer(args.path_to_data_root, args.save_path)
 
     tokenizer = FrenchTokenizer("trained_tokenizer/french_wp.json")
     sentence = "Héllo world!"

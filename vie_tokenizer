@@ -1,0 +1,27 @@
+import sentencepiece as spm
+import argparse
+
+def train_tokenizer(data_source_path):
+    spm.SentencePieceTrainer.Train(
+        input=,
+        model_prefix="spm_tokenizer",
+        vocab_size=32000,
+        character_coverage=1.0,
+        model_type='unigram',
+        pad_id=0,
+        unk_id=1,
+        bos_id=2,
+        eos_id=3,
+        user_defined_symbols='[BOS],[EOS]'
+    )
+
+if __name__ == "__main__":
+    arg_parser = argparse.ArgumentParser(description="Train a SentencePiece tokenizer for Vietnamese text.")
+    parser.add_argument(
+    "--path_to_data_root",
+        type=str,
+        required=False,
+        help="Path to the root directory containing training data."
+    )
+    args = parser.parse_args()
+    train_tokenizer(args.path_to_data_root)
