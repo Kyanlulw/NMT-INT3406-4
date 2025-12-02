@@ -4,7 +4,7 @@ import glob
 import argparse
 from tokenizers import Tokenizer
 import sentencepiece as spm
-from tokenizers.models import SentencePiece, WordPiece
+from tokenizers.models import WordPiece
 from tokenizers import normalizers
 from tokenizers.normalizers import NFC, Lowercase
 from tokenizers.pre_tokenizers import Whitespace
