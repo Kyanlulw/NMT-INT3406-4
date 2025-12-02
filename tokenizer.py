@@ -1,4 +1,5 @@
 import os
+import torch
 import glob
 import argparse
 from tokenizers import Tokenizer
@@ -45,68 +46,54 @@ def train_tokenizer(path_to_data_root):
         model_type='bpe'
     )
 
-class FrenchTokenizer:
+class VienameseTokenizer:
+    def __init__(self, tokenizer_path):
+        self.sp = spm.SentencePieceProcessor()
+        self.sp.load(tokenizer_path)
 
-    """
-    This is just a wrapper on top of the trained tokenizer to put together all the functionality we need 
-    for encoding and decoding
-    """
+        #specific sentecepeice defaults
+        self.bos.id = self.sp.bos_id()
+        self.eos.id = self.sp.eos_id()  
+        self.unk.id = self.sp.unk_id()
+        self.pad.id = self.sp.pad_id()
+
+        if self.pad.id == -1
+            self.pad.id = self.unk.id  # set pad to unk if no pad token
+
+    def encode(self, text, add_bos = True, add_eos = True, return_tensors = None):
+        #conver string to list of token ids
+        ids = self.sp.encode(text)
+
+        if add_bos and self.bos.id != -1:
+            ids = [self.bos.id] + ids
+        if add_eos and self.eos.id != -1:
+            ids = ids + [self.eos.id]
+
+        if return_tensors == "pt":
+            return torch.tensor([ids], dtype=torch.long)
+        return ids
     
-    def __init__(self, path_to_vocab, truncate=False, max_length=512):
+    def decode(self, ids, skip_special_tokens = True):
         
-        self.path_to_vocab = path_to_vocab
-        self.tokenizer = self.prepare_tokenizer()
-        self.vocab_size = len(self.tokenizer.get_vocab())
-        self.special_tokens_dict = {"[UNK]": self.tokenizer.token_to_id("[UNK]"),
-                                    "[PAD]": self.tokenizer.token_to_id("[PAD]"),
-                                    "[BOS]": self.tokenizer.token_to_id("[BOS]"),
-                                    "[EOS]": self.tokenizer.token_to_id("[EOS]")}
+        if hasattr(ids, "tolist"):
+            ids = ids.tolist()
+        
+        if skip_special_tokens:
+            ids = [id for id in ids if id not in {self.bos.id, self.eos.id, self.pad.id, self.unk.id}]
+        
+        return self.sp.decode(ids)
 
-        self.post_processor = TemplateProcessing(
-            single="[BOS] $A [EOS]",
-            special_tokens=[
-                ("[EOS]", self.tokenizer.token_to_id("[EOS]")),
-                ("[BOS]", self.tokenizer.token_to_id("[BOS]"))
-            ]
-        )
-        
-        self.truncate = truncate
-        if self.truncate:
-            self.max_len = max_length - self.post_processor.num_special_tokens_to_add(is_pair=False)
+    def tokenize(self, text):
+        return self.sp.encode_as_pieces(text, out_type=str)
 
-    def prepare_tokenizer(self):
-        tokenizer = Tokenizer.from_file(self.path_to_vocab)
-        tokenizer.decoder = decoders.WordPiece()
-        return tokenizer
-
-    def encode(self, input):
-        
-        def _parse_process_tokenized(tokenized):
-            if self.truncate:
-                tokenized.truncate(self.max_len, direction="right")
-            tokenized = self.post_processor.process(tokenized)
-            return tokenized.ids
-        
-        if isinstance(input, str):
-            tokenized = self.tokenizer.encode(input)
-            tokenized = _parse_process_tokenized(tokenized)
-
-        elif isinstance(input, (list, tuple)):
-            tokenized = self.tokenizer.encode_batch(input)
-            tokenized = [_parse_process_tokenized(t) for t in tokenized]
-        
-        return tokenized
+    @property
+    def vocab_size(self):
+        return self.sp.get_piece_size()
     
-    def decode(self, input, skip_special_tokens=True):
+    def __len__(self):
+        return self.vocab_size
 
-        if isinstance(input, list):
-            
-            if all(isinstance(item, list) for item in input):
-                decoded = self.tokenizer.decode_batch(input, skip_special_tokens=skip_special_tokens)
-            elif all(isinstance(item, int) for item in input):
-                decoded = self.tokenizer.decode(input, skip_special_tokens=skip_special_tokens)
-            
-        return decoded
+
         
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Tokenizer Prep")
@@ -122,7 +109,7 @@ if __name__ == "__main__":
 
     train_tokenizer(args.path_to_data_root)
 
-    tokenizer = FrenchTokenizer("trained_tokenizer/french_wp.json")
+    tokenizer = VietnameseTokenizer("trained_tokenizer/french_wp.json")
     sentence = "Héllo world!"
     enc = tokenizer.encode(sentence)
     print(enc)
