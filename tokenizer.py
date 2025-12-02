@@ -57,7 +57,7 @@ class VienameseTokenizer:
         self.unk.id = self.sp.unk_id()
         self.pad.id = self.sp.pad_id()
 
-        if self.pad.id == -1
+        if self.pad.id == -1:
             self.pad.id = self.unk.id  # set pad to unk if no pad token
 
     def encode(self, text, add_bos = True, add_eos = True, return_tensors = None):
