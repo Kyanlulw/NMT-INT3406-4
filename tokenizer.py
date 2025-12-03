@@ -33,10 +33,10 @@ class VietnameseTokenizer:
         self.sp = spm.SentencePieceProcessor()
         self.sp.load(tokenizer_path)
 
-        sp.bos = Token()
-        sp.eos = Token()
-        sp.unk = Token()
-        sp.pad = Token()
+        self.bos = Token()
+        self.eos = Token()
+        self.unk = Token()
+        self.pad = Token()
 
 
         #specific sentecepeice defaults
