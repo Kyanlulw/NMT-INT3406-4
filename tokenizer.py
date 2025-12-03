@@ -24,10 +24,20 @@ def train_tokenizer(path_to_data_root):
         model_type='bpe'
     )
 
+class Token:
+    """A simple placeholder object to hold token attributes."""
+    pass
+
 class VietnameseTokenizer:
     def __init__(self, tokenizer_path):
         self.sp = spm.SentencePieceProcessor()
         self.sp.load(tokenizer_path)
+
+        sp.bos = Token()
+        sp.eos = Token()
+        sp.unk = Token()
+        sp.pad = Token()
+
 
         #specific sentecepeice defaults
         self.bos.id = self.sp.bos_id()
